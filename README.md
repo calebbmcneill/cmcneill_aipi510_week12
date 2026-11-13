@@ -141,5 +141,5 @@ pull request, require the CI check to pass, and block direct pushes.
 
 ## Notes and limitations
 
-_TODO: what the model gets wrong (see the predicted-vs-actual plot), the small test set (60 rows,
-so the test score is noisy), and next steps._
+- The Test set is small (60n rows), so the test score is noisy and may not fully reflect the model's performance on larger datasets.
+- The predicted-vs-actual plot can help identify systematic errors and areas where the model struggles.
