@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 import pytest
+from sklearn.compose import ColumnTransformer
 from sklearn.datasets import make_classification, make_regression
 
 from mlpipeline.config import Config, DataConfig, ModelConfig, load_config
@@ -71,6 +72,28 @@ def test_test_split_never_influences_the_model(tmp_path):
 
     assert first["val_metrics"] == second["val_metrics"]  # model identical
     assert first["test_metrics"] != second["test_metrics"]  # only the test score moved
+
+
+@pytest.mark.parametrize("task,model", [("regression", "ridge"), ("classification", "random_forest")])
+def test_model_processes_test_features_exactly_once(tmp_path, monkeypatch, task, model):
+    csv = tmp_path / "data.csv"
+    _messy_frame(task).to_csv(csv, index=False)
+    cfg = _cfg(tmp_path, csv, task, model)
+    prepare(cfg)
+    test_f1 = pd.read_csv(split_path(cfg, "test"))["f1"].to_numpy()
+
+    passes = []
+    original = ColumnTransformer.transform
+
+    def spy(self, X, *args, **kwargs):
+        if len(X) == len(test_f1) and np.allclose(X["f1"].to_numpy(), test_f1):
+            passes.append(1)
+        return original(self, X, *args, **kwargs)
+
+    monkeypatch.setattr(ColumnTransformer, "transform", spy)
+    run_training(cfg)
+
+    assert len(passes) == 1  # metrics and plot share one pass over the test features
 
 
 def test_stale_processed_data_is_regenerated(tmp_path):

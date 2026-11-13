@@ -32,20 +32,12 @@ def _fmt(name: str, value: float) -> str:
 
 def render_results(res: dict) -> str:
     primary = res["primary_metric"]
-    label = primary.replace("_", " ")
     n = res["rows"]
     lines = [
-        f"**Test {label} = {_fmt(primary, res['test_metrics'][primary])}**"
-        f" (validation: {_fmt(primary, res['val_metrics'][primary])},"
-        f" baseline: {_fmt(primary, res['baseline_test_metrics'][primary])})",
+        f"**Test {primary} = {_fmt(primary, res['test_metrics'][primary])}**",
         "",
-        f"- Task: `{res['task']}` | Model: `{res['model']}` | Run: `{res['run_id']}`"
-        f" | Commit: `{res['git_commit'] or 'n/a'}`",
-        f"- Data: `{res['data']['path']}` ({res['data']['raw_rows']:,} raw rows, "
-        f"{res['data']['clean_rows']:,} after cleaning, SHA-256 `{res['data']['sha256'][:12]}`)",
-        f"- Split (train/val/test): {n['train']:,} / {n['val']:,} / {n['test']:,}."
-        " The test split is evaluated once, after the model is fit.",
-        f"- Features used: {len(res['features'])}",
+        f"`{res['model']}` ({res['task']}) | run `{res['run_id']}` | commit `{res['git_commit'] or 'n/a'}` | "
+        f"rows train/val/test: {n['train']:,}/{n['val']:,}/{n['test']:,} | features: {len(res['features'])}",
         "",
         "| Metric | Validation | Test | Baseline (test) |",
         "|---|---|---|---|",
@@ -95,12 +87,12 @@ def run_training(cfg: Config, readme: str | Path = "README.md") -> dict:
         ]
     )
     pipeline.fit(X_train, y_train)
-    val_metrics = ev.evaluate_pipeline(task, pipeline, X_val, y_val)
+    val_metrics, _ = ev.evaluate_pipeline(task, pipeline, X_val, y_val)
 
-    # Final, single evaluation: the test split is first read here, after the model is fixed.
+    # The test split is first read here, after the model is fixed, and passed through the model
+    # exactly once; the plot below reuses these predictions.
     X_test, y_test = load_split(cfg, "test")
-    X_test = X_test[features]
-    test_metrics = ev.evaluate_pipeline(task, pipeline, X_test, y_test)
+    test_metrics, test_pred = ev.evaluate_pipeline(task, pipeline, X_test[features], y_test)
 
     baseline = ev.baseline_model(task).fit(np.zeros((len(y_train), 1)), y_train)
     baseline_val = ev.compute_metrics(task, y_val, baseline.predict(np.zeros((len(y_val), 1))))
@@ -109,7 +101,7 @@ def run_training(cfg: Config, readme: str | Path = "README.md") -> dict:
     run_id = new_run_id()
     reports = Path(cfg.reports_dir)
     figures = ev.save_figures(
-        task, pipeline, (X_test, y_test), (X_val, y_val), reports / "figures", cfg.data.random_state
+        task, pipeline, y_test, test_pred, (X_val, y_val), reports / "figures", cfg.data.random_state
     )
 
     results = {

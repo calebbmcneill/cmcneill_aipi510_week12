@@ -1,9 +1,6 @@
-**Test r2 = 0.8925** (validation: 0.8828, baseline: -0.0003)
+**Test r2 = 0.8925**
 
-- Task: `regression` | Model: `random_forest` | Run: `20261113T160957Z` | Commit: `c3339a4`
-- Data: `data/raw/auto-mpg.data` (398 raw rows, 398 after cleaning, SHA-256 `48b830e11fee`)
-- Split (train/val/test): 278 / 60 / 60. The test split is evaluated once, after the model is fit.
-- Features used: 7
+`random_forest` (regression) | run `20261113T162614Z` | commit `8d86f97` | rows train/val/test: 278/60/60 | features: 7
 
 | Metric | Validation | Test | Baseline (test) |
 |---|---|---|---|

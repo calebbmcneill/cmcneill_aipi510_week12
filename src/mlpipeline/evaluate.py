@@ -54,22 +54,27 @@ def compute_metrics(task: str, y_true, y_pred, y_proba=None, classes=None) -> di
     return metrics
 
 
-def evaluate_pipeline(task: str, pipeline, X_test, y_test) -> dict:
-    y_pred = pipeline.predict(X_test)
+def evaluate_pipeline(task: str, pipeline, X, y) -> tuple[dict, np.ndarray]:
+    """Score `pipeline` on (X, y) with a single pass of the model over X.
+
+    Returns (metrics, predictions) so callers can reuse the predictions instead of re-predicting.
+    """
     y_proba = None
     if task == "classification" and hasattr(pipeline, "predict_proba"):
-        y_proba = pipeline.predict_proba(X_test)
+        y_proba = pipeline.predict_proba(X)
+        y_pred = pipeline.classes_[y_proba.argmax(axis=1)]  # same labels predict() would return
+    else:
+        y_pred = pipeline.predict(X)
     classes = getattr(pipeline, "classes_", None)
-    return compute_metrics(task, y_test, y_pred, y_proba, classes)
+    return compute_metrics(task, y, y_pred, y_proba, classes), y_pred
 
 
-def save_figures(task: str, pipeline, test, val, fig_dir: Path, seed: int = 42) -> list[str]:
-    """Diagnostic plot on the test split; permutation importance on the validation split."""
-    X_test, y_test = test
+def save_figures(task: str, pipeline, test_true, test_pred, val, fig_dir: Path, seed: int = 42) -> list[str]:
+    """Diagnostic plot from the test predictions; permutation importance on the validation split."""
+    y_test, y_pred = test_true, test_pred
     X_val, y_val = val
     fig_dir.mkdir(parents=True, exist_ok=True)
     saved = []
-    y_pred = pipeline.predict(X_test)
 
     fig, ax = plt.subplots(figsize=(6, 5))
     if task == "classification":
