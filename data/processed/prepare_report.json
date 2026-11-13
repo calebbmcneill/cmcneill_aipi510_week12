@@ -1,0 +1,24 @@
+{
+  "fingerprint": "ddb1129d7cf3100db55d49e3bf2cff5481e1944cd978acc21c25a8dbfebd9fbf",
+  "raw_path": "data/raw/auto-mpg.data",
+  "raw_sha256": "48b830e11feee5572525f8f1691ddb9d38d3d7b7063edcd8fca672c2a5e17d8d",
+  "task": "regression",
+  "raw_rows": 398,
+  "clean_rows": 398,
+  "rows": {
+    "train": 278,
+    "val": 60,
+    "test": 60
+  },
+  "missing_before_imputation": {
+    "horsepower": 6
+  },
+  "missing_after_imputation": {
+    "train": 0,
+    "val": 0,
+    "test": 0
+  },
+  "imputation_values_from_train": {
+    "horsepower": 92.0
+  }
+}

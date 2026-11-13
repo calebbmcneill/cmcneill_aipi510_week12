@@ -7,6 +7,7 @@ from mlpipeline.config import Config, DataConfig, ModelConfig, load_config
 from mlpipeline.data import infer_task, load_dataset, validate
 from mlpipeline.drift import build_baseline, compute_drift
 from mlpipeline.predict import drift_file, predict_file
+from mlpipeline.prepare import ensure_prepared, prepare, split_path
 from mlpipeline.train import run_training, update_readme
 
 
@@ -29,13 +30,66 @@ def _messy_frame(task: str, n: int = 400) -> pd.DataFrame:
 def _cfg(tmp_path, csv, task, model):
     return Config(
         task=task,
-        data=DataConfig(path=str(csv), target="target"),
+        data=DataConfig(path=str(csv), target="target", processed_dir=str(tmp_path / "processed")),
         model=ModelConfig(name=model),
-        cv_folds=3,
         output_dir=str(tmp_path / "models"),
         reports_dir=str(tmp_path / "reports"),
         update_readme=False,
     )
+
+
+def test_prepare_splits_70_15_15_without_overlap_and_imputes_from_train(tmp_path):
+    csv = tmp_path / "data.csv"
+    raw = _messy_frame("regression")
+    raw.to_csv(csv, index=False)
+    cfg = _cfg(tmp_path, csv, "regression", "ridge")
+
+    report = prepare(cfg)
+
+    parts = {n: pd.read_csv(split_path(cfg, n)) for n in ("train", "val", "test")}
+    assert {n: len(p) for n, p in parts.items()} == {"train": 280, "val": 60, "test": 60}
+    ids = [set(p["row_id"]) for p in parts.values()]
+    assert not (ids[0] & ids[1]) and not (ids[0] & ids[2]) and not (ids[1] & ids[2])
+    assert all(p.isna().sum().sum() == 0 for p in parts.values())
+    # the fill value is the median of the *training* rows' observed values, not of all rows
+    train_raw = raw.set_index("row_id").loc[parts["train"]["row_id"], "f0"]
+    assert report["imputation_values_from_train"]["f0"] == pytest.approx(train_raw.median())
+    assert report["imputation_values_from_train"]["f0"] != pytest.approx(raw["f0"].median())
+
+
+def test_test_split_never_influences_the_model(tmp_path):
+    csv = tmp_path / "data.csv"
+    _messy_frame("regression").to_csv(csv, index=False)
+    cfg = _cfg(tmp_path, csv, "regression", "ridge")
+
+    first = run_training(cfg)
+    test_path = split_path(cfg, "test")
+    test = pd.read_csv(test_path)
+    test["target"] = np.random.default_rng(1).permutation(test["target"].to_numpy())
+    test.to_csv(test_path, index=False)  # same fingerprint, so splits are not regenerated
+    second = run_training(cfg)
+
+    assert first["val_metrics"] == second["val_metrics"]  # model identical
+    assert first["test_metrics"] != second["test_metrics"]  # only the test score moved
+
+
+def test_stale_processed_data_is_regenerated(tmp_path):
+    csv = tmp_path / "data.csv"
+    _messy_frame("regression", n=400).to_csv(csv, index=False)
+    cfg = _cfg(tmp_path, csv, "regression", "ridge")
+    assert ensure_prepared(cfg)["clean_rows"] == 400
+    _messy_frame("regression", n=300).to_csv(csv, index=False)
+    assert ensure_prepared(cfg)["clean_rows"] == 300
+
+
+def test_load_dataset_applies_read_options(tmp_path):
+    path = tmp_path / "raw.data"
+    path.write_text('1.0  2  ?  "a b"\n3.0  4  5.5  "c d"\n', encoding="utf-8")
+    df = load_dataset(
+        path, {"sep": r"\s+", "header": None, "names": ["x", "y", "z", "name"], "na_values": ["?"]}
+    )
+    assert list(df.columns) == ["x", "y", "z", "name"]
+    assert df["z"].isna().tolist() == [True, False] and df["name"][0] == "a b"
 
 
 @pytest.mark.parametrize(
@@ -53,6 +107,7 @@ def test_train_beats_baseline_and_writes_artifacts(tmp_path, task, model):
     for path in ("models/latest/model.joblib", "models/latest/metadata.json",
                  "reports/metrics.json", "reports/baseline_stats.json", "reports/results.md"):
         assert (tmp_path / path).exists(), path
+    assert (tmp_path / "processed" / "test.csv").exists()
     assert len(res["data"]["sha256"]) == 64
 
 

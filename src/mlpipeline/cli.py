@@ -11,7 +11,10 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="mlpipeline", description=__doc__)
     sub = parser.add_subparsers(dest="command")
 
-    train = sub.add_parser("train", help="train, evaluate, version and report")
+    prep = sub.add_parser("prepare", help="clean raw data and write train/val/test splits")
+    prep.add_argument("--config", default="config.yaml")
+
+    train = sub.add_parser("train", help="prepare (if needed), train, evaluate, version and report")
     train.add_argument("--config", default="config.yaml")
 
     pred = sub.add_parser("predict", help="score a file with the latest model")
@@ -28,12 +31,19 @@ def main(argv: list[str] | None = None) -> int:
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
 
     # Imports are deferred so `--help` stays fast.
-    if args.command in (None, "train"):
+    if args.command == "prepare":
+        from .prepare import prepare
+
+        report = prepare(load_config(args.config))
+        print(f"Rows (train/val/test): {report['rows']} | imputed from train: "
+              f"{report['imputation_values_from_train'] or 'nothing'}")
+    elif args.command in (None, "train"):
         from .train import run_training
 
         results = run_training(load_config(getattr(args, "config", "config.yaml")))
         primary = results["primary_metric"]
-        print(f"\nTest {primary}: {results['test_metrics'][primary]:.4f}")
+        print(f"\nValidation {primary}: {results['val_metrics'][primary]:.4f}")
+        print(f"Test {primary}: {results['test_metrics'][primary]:.4f}")
     elif args.command == "predict":
         from .predict import predict_file
 

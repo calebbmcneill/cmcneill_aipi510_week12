@@ -23,7 +23,6 @@ from sklearn.metrics import (  # noqa: E402
 )
 
 PRIMARY_METRIC = {"classification": "accuracy", "regression": "r2"}
-CV_SCORING = {"classification": "accuracy", "regression": "r2"}
 
 
 def baseline_model(task: str):
@@ -64,7 +63,10 @@ def evaluate_pipeline(task: str, pipeline, X_test, y_test) -> dict:
     return compute_metrics(task, y_test, y_pred, y_proba, classes)
 
 
-def save_figures(task: str, pipeline, X_test, y_test, fig_dir: Path, seed: int = 42) -> list[str]:
+def save_figures(task: str, pipeline, test, val, fig_dir: Path, seed: int = 42) -> list[str]:
+    """Diagnostic plot on the test split; permutation importance on the validation split."""
+    X_test, y_test = test
+    X_val, y_val = val
     fig_dir.mkdir(parents=True, exist_ok=True)
     saved = []
     y_pred = pipeline.predict(X_test)
@@ -88,14 +90,14 @@ def save_figures(task: str, pipeline, X_test, y_test, fig_dir: Path, seed: int =
     saved.append(name)
 
     # Permutation importance on original columns (model-agnostic, works through the pipeline)
-    sample = X_test if len(X_test) <= 2000 else X_test.sample(2000, random_state=seed)
+    sample = X_val if len(X_val) <= 2000 else X_val.sample(2000, random_state=seed)
     result = permutation_importance(
-        pipeline, sample, y_test.loc[sample.index], n_repeats=5, random_state=seed, n_jobs=1
+        pipeline, sample, y_val.loc[sample.index], n_repeats=5, random_state=seed, n_jobs=1
     )
-    imp = pd.Series(result.importances_mean, index=X_test.columns).sort_values().tail(15)
+    imp = pd.Series(result.importances_mean, index=X_val.columns).sort_values().tail(15)
     fig, ax = plt.subplots(figsize=(7, 0.35 * len(imp) + 1.5))
     imp.plot.barh(ax=ax)
-    ax.set_title("Permutation importance (top features, test)")
+    ax.set_title("Permutation importance (top features, validation)")
     fig.tight_layout()
     fig.savefig(fig_dir / "feature_importance.png", dpi=120)
     plt.close(fig)

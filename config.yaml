@@ -1,13 +1,21 @@
-# Everything dataset-specific lives here. Edit this file after adding your dataset;
-# no code changes should be needed for a typical tabular CSV.
+# Everything dataset-specific lives here.
 
-task: auto            # auto | classification | regression
+task: regression      # auto | classification | regression
 
 data:
-  path: data/raw/YOUR_FILE.csv   # TODO: path to your dataset (csv, tsv, json, parquet, xlsx)
-  target: target               # TODO: name of the column to predict
-  drop_columns: []             # IDs, free text, leakage columns, etc.
-  test_size: 0.2
+  path: data/raw/auto-mpg.data
+  # auto-mpg.data is whitespace-delimited, has no header row, and marks missing values with "?"
+  read_options:
+    sep: '\s+'
+    header: null
+    names: [mpg, cylinders, displacement, horsepower, weight, acceleration, model_year, origin, car_name]
+    na_values: ["?"]
+  target: mpg
+  drop_columns: [car_name]     # unique text per row: an identifier, not a predictor
+  categorical_columns: [origin]  # 1/2/3 are region codes, not quantities
+  processed_dir: data/processed  # cleaned train/val/test CSVs (raw files are never modified)
+  val_size: 0.15
+  test_size: 0.15              # train gets the remaining 70%
   random_state: 42
   stratify: true               # classification only
   max_categorical_cardinality: 50   # categorical columns with more unique values are dropped
@@ -19,7 +27,6 @@ model:
   name: random_forest
   params: {}                   # forwarded to the scikit-learn estimator
 
-cv_folds: 5                    # cross-validation on the training split only
 output_dir: models             # versioned model artifacts (git-ignored)
 reports_dir: reports           # metrics, figures, drift baseline (committed)
 update_readme: true            # rewrite the RESULTS block in README.md after training

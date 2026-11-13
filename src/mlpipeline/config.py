@@ -13,8 +13,12 @@ TASKS = ("auto", "classification", "regression")
 class DataConfig:
     path: str = "data/raw/YOUR_FILE.csv"
     target: str = "target"
+    read_options: dict = field(default_factory=dict)  # forwarded to the pandas reader
     drop_columns: list[str] = field(default_factory=list)
-    test_size: float = 0.2
+    categorical_columns: list[str] = field(default_factory=list)  # numeric codes to treat as categories
+    processed_dir: str = "data/processed"
+    val_size: float = 0.15
+    test_size: float = 0.15
     random_state: int = 42
     stratify: bool = True
     max_categorical_cardinality: int = 50
@@ -32,7 +36,6 @@ class Config:
     task: str = "auto"
     data: DataConfig = field(default_factory=DataConfig)
     model: ModelConfig = field(default_factory=ModelConfig)
-    cv_folds: int = 5
     output_dir: str = "models"
     reports_dir: str = "reports"
     update_readme: bool = True
@@ -40,8 +43,9 @@ class Config:
     def __post_init__(self) -> None:
         if self.task not in TASKS:
             raise ValueError(f"task must be one of {TASKS}, got {self.task!r}")
-        if not 0 < self.data.test_size < 1:
-            raise ValueError("data.test_size must be between 0 and 1")
+        d = self.data
+        if d.val_size <= 0 or d.test_size <= 0 or d.val_size + d.test_size >= 1:
+            raise ValueError("data.val_size and data.test_size must be positive and sum to less than 1")
 
 
 def _build(cls, raw: dict | None, section: str):

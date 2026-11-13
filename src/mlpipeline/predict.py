@@ -28,7 +28,7 @@ def predict_file(
     missing = [c for c in meta["features"] if c not in df.columns]
     if missing:
         raise ValueError(f"Input is missing required feature columns: {missing}")
-    X = prepare_features(df)[meta["features"]]
+    X = prepare_features(df, meta["config"]["data"]["categorical_columns"])[meta["features"]]
     out = df.copy()
     out["prediction"] = pipeline.predict(X)
     Path(output_path).parent.mkdir(parents=True, exist_ok=True)
@@ -45,7 +45,7 @@ def drift_file(
     if not baseline_path.exists():
         raise FileNotFoundError(f"No baseline at '{baseline_path}'. Run `mlpipeline train` first.")
     baseline = json.loads(baseline_path.read_text(encoding="utf-8"))
-    report = compute_drift(baseline, prepare_features(load_dataset(input_path)))
+    report = compute_drift(baseline, prepare_features(load_dataset(input_path), baseline.get("cast", [])))
     if output_path:
         Path(output_path).parent.mkdir(parents=True, exist_ok=True)
         report.to_csv(output_path, index=False)

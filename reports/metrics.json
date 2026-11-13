@@ -1,0 +1,124 @@
+{
+  "run_id": "20261113T160957Z",
+  "git_commit": "c3339a4",
+  "task": "regression",
+  "model": "random_forest",
+  "model_params": {},
+  "primary_metric": "r2",
+  "val_metrics": {
+    "r2": 0.882762319831637,
+    "rmse": 2.3984125400981395,
+    "mae": 1.8211416666666678
+  },
+  "test_metrics": {
+    "r2": 0.8925216985253158,
+    "rmse": 2.6573139147768474,
+    "mae": 1.730649999999998
+  },
+  "baseline_val_metrics": {
+    "r2": -0.0020424949715596163,
+    "rmse": 7.01186180158088,
+    "mae": 5.826666666666667
+  },
+  "baseline_test_metrics": {
+    "r2": -0.00027020130070187776,
+    "rmse": 8.106644530308209,
+    "mae": 6.710000000000002
+  },
+  "rows": {
+    "train": 278,
+    "val": 60,
+    "test": 60
+  },
+  "features": [
+    "cylinders",
+    "displacement",
+    "horsepower",
+    "weight",
+    "acceleration",
+    "model_year",
+    "origin"
+  ],
+  "numeric_features": [
+    "cylinders",
+    "displacement",
+    "horsepower",
+    "weight",
+    "acceleration",
+    "model_year"
+  ],
+  "categorical_features": [
+    "origin"
+  ],
+  "classes": null,
+  "data": {
+    "path": "data/raw/auto-mpg.data",
+    "sha256": "48b830e11feee5572525f8f1691ddb9d38d3d7b7063edcd8fca672c2a5e17d8d",
+    "raw_rows": 398,
+    "clean_rows": 398,
+    "missing_before_imputation": {
+      "horsepower": 6
+    },
+    "imputation_values_from_train": {
+      "horsepower": 92.0
+    }
+  },
+  "config": {
+    "task": "regression",
+    "data": {
+      "path": "data/raw/auto-mpg.data",
+      "target": "mpg",
+      "read_options": {
+        "sep": "\\s+",
+        "header": null,
+        "names": [
+          "mpg",
+          "cylinders",
+          "displacement",
+          "horsepower",
+          "weight",
+          "acceleration",
+          "model_year",
+          "origin",
+          "car_name"
+        ],
+        "na_values": [
+          "?"
+        ]
+      },
+      "drop_columns": [
+        "car_name"
+      ],
+      "categorical_columns": [
+        "origin"
+      ],
+      "processed_dir": "data/processed",
+      "val_size": 0.15,
+      "test_size": 0.15,
+      "random_state": 42,
+      "stratify": true,
+      "max_categorical_cardinality": 50,
+      "sample_rows": null
+    },
+    "model": {
+      "name": "random_forest",
+      "params": {}
+    },
+    "output_dir": "models",
+    "reports_dir": "reports",
+    "update_readme": true
+  },
+  "environment": {
+    "python": "3.10.0",
+    "libraries": {
+      "numpy": "2.2.6",
+      "pandas": "2.3.3",
+      "scikit-learn": "1.7.2",
+      "joblib": "1.6.0"
+    }
+  },
+  "figures": [
+    "predicted_vs_actual.png",
+    "feature_importance.png"
+  ]
+}
