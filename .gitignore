@@ -1,0 +1,15 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+.ipynb_checkpoints/
+.DS_Store
+.env
+
+# Versioned model artifacts are reproducible from code + config + data hash
+models/
+reports/predictions.csv
+reports/drift_report.csv

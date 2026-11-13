@@ -1,0 +1,25 @@
+# Everything dataset-specific lives here. Edit this file after adding your dataset;
+# no code changes should be needed for a typical tabular CSV.
+
+task: auto            # auto | classification | regression
+
+data:
+  path: data/raw/YOUR_FILE.csv   # TODO: path to your dataset (csv, tsv, json, parquet, xlsx)
+  target: target               # TODO: name of the column to predict
+  drop_columns: []             # IDs, free text, leakage columns, etc.
+  test_size: 0.2
+  random_state: 42
+  stratify: true               # classification only
+  max_categorical_cardinality: 50   # categorical columns with more unique values are dropped
+  sample_rows: null            # set a row count for a quick run on a large dataset
+
+model:
+  # classification: logistic_regression | random_forest | gradient_boosting
+  # regression:     linear_regression | ridge | random_forest | gradient_boosting
+  name: random_forest
+  params: {}                   # forwarded to the scikit-learn estimator
+
+cv_folds: 5                    # cross-validation on the training split only
+output_dir: models             # versioned model artifacts (git-ignored)
+reports_dir: reports           # metrics, figures, drift baseline (committed)
+update_readme: true            # rewrite the RESULTS block in README.md after training
