@@ -143,3 +143,7 @@ pull request, require the CI check to pass, and block direct pushes.
 
 - The Test set is small (60n rows), so the test score is noisy and may not fully reflect the model's performance on larger datasets.
 - The predicted-vs-actual plot can help identify systematic errors and areas where the model struggles.
+
+## References
+
+- Quinlan, R. (1993). Auto MPG [Dataset]. UCI Machine Learning Repository. https://doi.org/10.24432/C5859H. https://archive.ics.uci.edu/dataset/9/auto+mpg
