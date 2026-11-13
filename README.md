@@ -103,6 +103,38 @@ reports/          metrics, figures, drift baseline
 models/           versioned model artifacts (git-ignored)
 ```
 
+## Reproducibility
+
+- **Seeded:** `data.random_state` (42) fixes the split and the model seed.
+- **Same data:** the raw file's SHA-256 is recorded in `reports/metrics.json`; the processed splits in `data/processed/` are committed.
+- **Same environment:** Python 3.10 or 3.11 (as in CI). `reports/metrics.json` lists the exact library versions and git commit of the last run; install matching versions to reproduce its numbers.
+- **To reproduce the results above:**
+
+```bash
+git clone <repo-url> && cd <repo-name>
+python -m venv .venv && .venv\Scripts\activate    # macOS/Linux: source .venv/bin/activate
+pip install -e ".[dev]"
+pytest
+mlpipeline train                                  # regenerates splits, model and reports
+```
+
+- **Or with Docker:** `docker build -t mlpipeline . && docker run mlpipeline`
+
+## Contributing
+
+**Never commit directly to `main`.** All changes go through a branch and a pull request.
+
+1. Create a branch from an up-to-date `main`: `git switch main && git pull && git switch -c <type>/<short-description>` (e.g. `feature/add-ridge-config`).
+2. Make small, focused commits.
+3. Before pushing, run `ruff check .` and `pytest`. Both must pass.
+4. If you retrain, commit the updated `reports/` and README results block with the change that caused them.
+5. Push the branch and open a pull request into `main` describing what changed and why. Include
+   before/after metrics for model or data changes.
+6. Merge only after CI passes and a reviewer approves. Start each new change on a new branch.
+
+Repository owners: enable branch protection on `main` (*Settings → Branches → Add rule*): require a
+pull request, require the CI check to pass, and block direct pushes.
+
 ## Notes and limitations
 
 _TODO: what the model gets wrong (see the predicted-vs-actual plot), the small test set (60 rows,
