@@ -1,18 +1,18 @@
 {
-  "run_id": "20261113T162614Z",
-  "git_commit": "8d86f97",
+  "run_id": "20261113T164628Z",
+  "git_commit": "6cf8774",
   "task": "regression",
   "model": "random_forest",
   "model_params": {},
   "primary_metric": "r2",
   "val_metrics": {
     "r2": 0.882762319831637,
-    "rmse": 2.398412540098139,
-    "mae": 1.8211416666666682
+    "rmse": 2.39841254009814,
+    "mae": 1.8211416666666687
   },
   "test_metrics": {
-    "r2": 0.8925216985253157,
-    "rmse": 2.657313914776848,
+    "r2": 0.8925216985253158,
+    "rmse": 2.6573139147768474,
     "mae": 1.7306499999999985
   },
   "baseline_val_metrics": {

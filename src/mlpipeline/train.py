@@ -30,11 +30,21 @@ def _fmt(name: str, value: float) -> str:
     return f"{value * 100:.2f}%" if name in PERCENT_METRICS else f"{value:.4f}"
 
 
+def _headline(res: dict) -> str:
+    test = res["test_metrics"]
+    if res["task"] == "classification":
+        return f"**Test accuracy = {_fmt('accuracy', test['accuracy'])}**"
+    unit = res["config"]["data"]["target"]
+    return (
+        f"**Test R² = {test['r2']:.4f}** ({test['r2'] * 100:.1f}% of the variance in `{unit}` explained)"
+        f" | RMSE {test['rmse']:.2f} `{unit}` | MAE {test['mae']:.2f} `{unit}`"
+    )
+
+
 def render_results(res: dict) -> str:
-    primary = res["primary_metric"]
     n = res["rows"]
     lines = [
-        f"**Test {primary} = {_fmt(primary, res['test_metrics'][primary])}**",
+        _headline(res),
         "",
         f"`{res['model']}` ({res['task']}) | run `{res['run_id']}` | commit `{res['git_commit'] or 'n/a'}` | "
         f"rows train/val/test: {n['train']:,}/{n['val']:,}/{n['test']:,} | features: {len(res['features'])}",

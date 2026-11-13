@@ -6,10 +6,14 @@ after every training run.
 
 ## Results
 
-<!-- RESULTS:START -->
-**Test r2 = 0.8925**
+Accuracy is reported on the held-out **test** split. This is a regression task, so there is no
+class accuracy: **R²** (share of variance in `mpg` explained) is the headline score, with RMSE and
+MAE in mpg. Classification datasets report accuracy instead.
 
-`random_forest` (regression) | run `20261113T162614Z` | commit `8d86f97` | rows train/val/test: 278/60/60 | features: 7
+<!-- RESULTS:START -->
+**Test R² = 0.8925** (89.3% of the variance in `mpg` explained) | RMSE 2.66 `mpg` | MAE 1.73 `mpg`
+
+`random_forest` (regression) | run `20261113T164628Z` | commit `6cf8774` | rows train/val/test: 278/60/60 | features: 7
 
 | Metric | Validation | Test | Baseline (test) |
 |---|---|---|---|
